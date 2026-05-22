@@ -1,9 +1,10 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import { connectDatabase } from './config/database';
+import { env } from './config/env';
 
 const app: Application = express();
-const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -16,6 +17,7 @@ app.get('/health', (req: Request, res: Response) => {
     status: 'ok', 
     message: 'Recipe App API is running',
     timestamp: new Date().toISOString(),
+    environment: env.NODE_ENV,
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
@@ -25,8 +27,9 @@ const startServer = async () => {
   try {
     await connectDatabase();
     
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    app.listen(env.PORT, () => {
+      console.log(`Server running on port ${env.PORT}`);
+      console.log(`Environment: ${env.NODE_ENV}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
