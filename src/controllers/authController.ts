@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import User from '../models/User';
 import { generateToken } from '../utils/jwt';
 import { UserResponse } from '../types';
+import { validateEmail, validatePassword, validateName } from '../utils/validators';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -16,20 +17,53 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // Validate email format
+    if (!validateEmail(email)) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address',
+      });
+      return;
+    }
+
+    // Validate name
+    const nameValidation = validateName(name);
+    if (!nameValidation.valid) {
+      res.status(400).json({
+        success: false,
+        message: nameValidation.message,
+      });
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      res.status(400).json({
+        success: false,
+        message: passwordValidation.message,
+      });
+      return;
+    }
+
+    // Check if email already exists (case-insensitive)
+    const existingUser = await User.findOne({ 
+      email: email.toLowerCase() 
+    });
+    
     if (existingUser) {
       res.status(400).json({
         success: false,
-        message: 'User with this email already exists', // provicional
+        message: 'An account with this email already exists', // provicional
+        field: 'email',
       });
       return;
     }
 
     // Create user
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password,
     });
 
@@ -58,6 +92,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error: any) {
     console.error('Register error:', error);
+    
+    // Handle MongoDB duplicate key error
+    if (error.code === 11000) {
+      res.status(400).json({
+        success: false,
+        message: 'An account with this email already exists', // provicional
+        field: 'email',
+      });
+      return;
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Error registering user',
@@ -79,8 +124,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Find user with password field
-    const user = await User.findOne({ email }).select('+password');
+    // Validate email format
+    if (!validateEmail(email)) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address',
+      });
+      return;
+    }
+
+    // Find user with password field (case-insensitive)
+    const user = await User.findOne({ 
+      email: email.toLowerCase().trim() 
+    }).select('+password');
+    
     if (!user) {
       res.status(401).json({
         success: false,
