@@ -3,6 +3,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import { connectDatabase } from './config/database';
 import { env } from './config/env';
+import authRoutes from './routes/auth';
 
 const app: Application = express();
 
@@ -10,6 +11,9 @@ const app: Application = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
@@ -30,6 +34,7 @@ const startServer = async () => {
     app.listen(env.PORT, () => {
       console.log(`Server running on port ${env.PORT}`);
       console.log(`Environment: ${env.NODE_ENV}`);
+      console.log(`API: http://localhost:${env.PORT}/api`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
