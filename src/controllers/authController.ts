@@ -8,7 +8,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = req.body;
 
-    // Validate required fields
     if (!name || !email || !password) {
       res.status(400).json({
         success: false,
@@ -17,7 +16,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Validate email format
     if (!validateEmail(email)) {
       res.status(400).json({
         success: false,
@@ -26,7 +24,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Validate name
     const nameValidation = validateName(name);
     if (!nameValidation.valid) {
       res.status(400).json({
@@ -36,7 +33,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Validate password
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       res.status(400).json({
@@ -46,7 +42,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if email already exists (case-insensitive)
     const existingUser = await User.findOne({ 
       email: email.toLowerCase() 
     });
@@ -54,28 +49,26 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     if (existingUser) {
       res.status(400).json({
         success: false,
-        message: 'An account with this email already exists', // provicional
+        message: 'An account with this email already exists',
         field: 'email',
       });
       return;
     }
 
-    // Create user
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
     });
 
-    // Generate token
+    // FIX: Convertir ObjectId a string
     const token = generateToken({
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
     });
 
-    // Prepare response
     const userResponse: UserResponse = {
-      _id: user._id,
+      _id: user._id.toString(),
       name: user.name,
       email: user.email,
       createdAt: user.createdAt,
@@ -93,11 +86,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   } catch (error: any) {
     console.error('Register error:', error);
     
-    // Handle MongoDB duplicate key error
     if (error.code === 11000) {
       res.status(400).json({
         success: false,
-        message: 'An account with this email already exists', // provicional
+        message: 'An account with this email already exists',
         field: 'email',
       });
       return;
@@ -115,7 +107,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
-    // Validate required fields
     if (!email || !password) {
       res.status(400).json({
         success: false,
@@ -124,7 +115,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Validate email format
     if (!validateEmail(email)) {
       res.status(400).json({
         success: false,
@@ -133,7 +123,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Find user with password field (case-insensitive)
     const user = await User.findOne({ 
       email: email.toLowerCase().trim() 
     }).select('+password');
@@ -141,30 +130,28 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user) {
       res.status(401).json({
         success: false,
-        message: 'Invalid credentials',
+        message: 'Invalid email or password',
       });
       return;
     }
 
-    // Check password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       res.status(401).json({
         success: false,
-        message: 'Invalid credentials',
+        message: 'Invalid email or password',
       });
       return;
     }
 
-    // Generate token
+    // FIX: Convertir ObjectId a string
     const token = generateToken({
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
     });
 
-    // Prepare response
     const userResponse: UserResponse = {
-      _id: user._id,
+      _id: user._id.toString(),
       name: user.name,
       email: user.email,
       createdAt: user.createdAt,
