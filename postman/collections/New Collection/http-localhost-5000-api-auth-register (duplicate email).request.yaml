@@ -1,0 +1,13 @@
+$kind: http-request
+name: http://localhost:5000/api/auth/register (duplicate email)
+url: http://localhost:5000/api/auth/register
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "name": "Pedro Lopez",
+      "email": "juan@test.com",
+      "password": "654321"
+    }
+order: 4027704171988854
