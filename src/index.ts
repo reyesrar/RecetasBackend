@@ -6,6 +6,8 @@ import { env } from './config/env';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import recipeRoutes from './routes/recipes';
+import groupRoutes from './routes/groups';
 
 const app: Application = express();
 
@@ -17,6 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/recipes', recipeRoutes);
+app.use('/api/groups', groupRoutes);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
