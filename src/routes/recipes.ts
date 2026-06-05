@@ -6,6 +6,9 @@ import {
   getRecipeById,
   updateRecipe,
   deleteRecipe,
+  addRecipeToGroup,
+  removeRecipeFromGroup,
+  getRecipesByGroup,
 } from '../controllers/recipeController';
 import { protect } from '../middleware/auth';
 
@@ -17,5 +20,8 @@ router.get('/all', protect, getAllRecipes);
 router.get('/:id', protect, getRecipeById);
 router.put('/:id', protect, updateRecipe);
 router.delete('/:id', protect, deleteRecipe);
+router.post('/group/add', protect, addRecipeToGroup);
+router.post('/group/remove', protect, removeRecipeFromGroup);
+router.get('/group/:groupId', protect, getRecipesByGroup);
 
 export default router;

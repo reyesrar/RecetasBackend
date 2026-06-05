@@ -192,3 +192,98 @@ export const deleteRecipe = async (req: AuthRequest, res: Response): Promise<voi
     });
   }
 };
+
+export const addRecipeToGroup = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { recipeId, groupId } = req.body;
+    const userId = req.user?.userId;
+
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe || recipe.userId.toString() !== userId) {
+      res.status(403).json({
+        success: false,
+        message: 'Recipe not found or not authorized',
+      });
+      return;
+    }
+
+    if (recipe.groups.includes(groupId)) {
+      res.status(400).json({
+        success: false,
+        message: 'Recipe already in this group',
+      });
+      return;
+    }
+
+    recipe.groups.push(groupId);
+    await recipe.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Recipe added to group',
+      data: recipe,
+    });
+  } catch (error: any) {
+    console.error('Add to group error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding recipe to group',
+    });
+  }
+};
+
+export const removeRecipeFromGroup = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { recipeId, groupId } = req.body;
+    const userId = req.user?.userId;
+
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe || recipe.userId.toString() !== userId) {
+      res.status(403).json({
+        success: false,
+        message: 'Recipe not found or not authorized',
+      });
+      return;
+    }
+
+    recipe.groups = recipe.groups.filter((g) => g.toString() !== groupId);
+    await recipe.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Recipe removed from group',
+      data: recipe,
+    });
+  } catch (error: any) {
+    console.error('Remove from group error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error removing recipe from group',
+    });
+  }
+};
+
+export const getRecipesByGroup = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { groupId } = req.params;
+    const userId = req.user?.userId;
+
+    const recipes = await Recipe.find({
+      groups: groupId,
+      userId,
+    })
+      .sort({ title: 1 })
+      .populate('groups');
+
+    res.status(200).json({
+      success: true,
+      data: recipes,
+    });
+  } catch (error: any) {
+    console.error('Get recipes by group error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching recipes',
+    });
+  }
+};
